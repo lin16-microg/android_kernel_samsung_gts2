@@ -117,7 +117,6 @@ struct crypt_config {
 	 * pool for per bio private data, crypto requests and
 	 * encryption requeusts/buffer pages
 	 */
-	mempool_t *io_pool;
 	mempool_t *req_pool;
 	mempool_t *page_pool;
 	struct bio_set *bs;
@@ -170,8 +169,6 @@ struct crypt_config {
 };
 
 #define MIN_IOS        16
-
-static struct kmem_cache *_crypt_io_pool;
 
 static void clone_init(struct dm_crypt_io *, struct bio *);
 static void kcryptd_queue_crypt(struct dm_crypt_io *io);
@@ -904,8 +901,6 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
 
 	if (io->ctx.req)
 		crypt_free_req(cc, io->ctx.req, base_bio);
-	if (io != dm_per_bio_data(base_bio, cc->per_bio_data_size))
-		mempool_free(io, cc->io_pool);
 
 	bio_endio(base_bio, error);
 }
@@ -1362,8 +1357,6 @@ static void crypt_dtr(struct dm_target *ti)
 			mempool_destroy(cc->req_pool);
 	}
 
-	if (cc->io_pool)
-		mempool_destroy(cc->io_pool);
 
 	if (cc->hw_fmp == 0)
 		if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
@@ -1588,13 +1581,6 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	ret = crypt_ctr_cipher(ti, argv[0], argv[1]);
 	if (ret < 0)
 		goto bad;
-
-	ret = -ENOMEM;
-	cc->io_pool = mempool_create_slab_pool(MIN_IOS, _crypt_io_pool);
-	if (!cc->io_pool) {
-		ti->error = "Cannot allocate crypt io mempool";
-		goto bad;
-	}
 
 	if (cc->hw_fmp == 0) {
 		cc->dmreq_start = sizeof(struct ablkcipher_request);
@@ -1893,15 +1879,9 @@ static int __init dm_crypt_init(void)
 {
 	int r;
 
-	_crypt_io_pool = KMEM_CACHE(dm_crypt_io, 0);
-	if (!_crypt_io_pool)
-		return -ENOMEM;
-
 	r = dm_register_target(&crypt_target);
-	if (r < 0) {
+	if (r < 0)
 		DMERR("register failed %d", r);
-		kmem_cache_destroy(_crypt_io_pool);
-	}
 
 	return r;
 }
@@ -1909,7 +1889,6 @@ static int __init dm_crypt_init(void)
 static void __exit dm_crypt_exit(void)
 {
 	dm_unregister_target(&crypt_target);
-	kmem_cache_destroy(_crypt_io_pool);
 }
 
 module_init(dm_crypt_init);
