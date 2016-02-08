@@ -1958,23 +1958,14 @@ static ssize_t snd_timer_user_read(struct file *file, char __user *buffer,
 		spin_unlock_irq(&tu->qlock);
 
 		if (tu->tread) {
-			if (copy_to_user(buffer, &tu->tqueue[tu->qhead++],
-					 sizeof(struct snd_timer_tread))) {
+			if (copy_to_user(buffer, &tu->tqueue[qhead],
+					 sizeof(struct snd_timer_tread)))
 				err = -EFAULT;
-				goto _error;
-			}
 		} else {
-			if (copy_to_user(buffer, &tu->queue[tu->qhead++],
-					 sizeof(struct snd_timer_read))) {
+			if (copy_to_user(buffer, &tu->queue[qhead],
+					 sizeof(struct snd_timer_read)))
 				err = -EFAULT;
-				goto _error;
-			}
 		}
-
-		tu->qhead %= tu->queue_size;
-
-		result += unit;
-		buffer += unit;
 
 		spin_lock_irq(&tu->qlock);
 		tu->qused--;
