@@ -1041,9 +1041,8 @@ static inline int ip6_ufo_append_data(struct sock *sk,
 			int getfrag(void *from, char *to, int offset, int len,
 			int odd, struct sk_buff *skb),
 			void *from, int length, int hh_len, int fragheaderlen,
-			int transhdrlen, int mtu,unsigned int flags,
-			struct rt6_info *rt)
-
+			int exthdrlen, int transhdrlen, int mtu,
+			unsigned int flags, struct rt6_info *rt)
 {
 	struct sk_buff *skb;
 	int err;
@@ -1068,7 +1067,7 @@ static inline int ip6_ufo_append_data(struct sock *sk,
 		skb_put(skb,fragheaderlen + transhdrlen);
 
 		/* initialize network header pointer */
-		skb_reset_network_header(skb);
+		skb_set_network_header(skb, exthdrlen);
 
 		/* initialize protocol header pointer */
 		skb->transport_header = skb->network_header + fragheaderlen;
@@ -1290,7 +1289,7 @@ emsgsize:
 	    (sk->sk_protocol == IPPROTO_UDP) &&
 	    (rt->dst.dev->features & NETIF_F_UFO)) {
 		err = ip6_ufo_append_data(sk, getfrag, from, length,
-					  hh_len, fragheaderlen,
+					  hh_len, fragheaderlen, exthdrlen,
 					  transhdrlen, mtu, flags, rt);
 		if (err)
 			goto error;
