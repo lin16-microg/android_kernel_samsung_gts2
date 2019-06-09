@@ -127,6 +127,9 @@ typedef void (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
 /* File needs atomic accesses to f_pos */
 #define FMODE_ATOMIC_POS        ((__force fmode_t)0x8000)
 
+/* File is stream-like */
+#define FMODE_STREAM            ((__force fmode_t)0x200000)
+
 /* File page don't need to be cached, for stackable filesystem's lower file */
 #define FMODE_NONCACHEABLE     ((__force fmode_t)0x800000)
 
@@ -2493,6 +2496,7 @@ extern loff_t generic_file_llseek_size(struct file *file, loff_t offset,
 		int whence, loff_t maxsize, loff_t eof);
 extern int generic_file_open(struct inode * inode, struct file * filp);
 extern int nonseekable_open(struct inode * inode, struct file * filp);
+extern int stream_open(struct inode * inode, struct file * filp);
 
 #ifdef CONFIG_FS_XIP
 extern ssize_t xip_file_read(struct file *filp, char __user *buf, size_t len,
