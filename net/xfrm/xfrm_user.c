@@ -1216,6 +1216,9 @@ static int verify_newpolicy_info(struct xfrm_userpolicy_info *p)
 	}
 
 	switch (p->sel.family) {
+	case AF_UNSPEC:
+		break;
+
 	case AF_INET:
 		break;
 
