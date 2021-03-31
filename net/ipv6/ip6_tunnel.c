@@ -1520,7 +1520,6 @@ static int __net_init ip6_fb_tnl_dev_init(struct net_device *dev)
 		return err;
 
 	t->parms.proto = IPPROTO_IPV6;
-	dev_hold(dev);
 
 	ip6_tnl_link_config(t);
 
