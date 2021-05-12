@@ -3322,9 +3322,6 @@ int usb_port_resume(struct usb_device *udev, pm_message_t msg)
 		 */
 		status = hub_port_status(hub, port1, &portstatus, &portchange);
 
-		/* TRSMRCY = 10 msec */
-		msleep(10);
-
 		/* If portstatus is still resuming, retry GET_PORT_STATUS */
 		if (udev->quirks & USB_QUIRK_HSIC_TUNE) {
 			if (portstatus & USB_PORT_STAT_SUSPEND) {
@@ -3350,6 +3347,9 @@ int usb_port_resume(struct usb_device *udev, pm_message_t msg)
 				usb_clear_port_feature(hub->hdev, port1,
 						USB_PORT_FEAT_C_SUSPEND);
 		}
+
+		/* TRSMRCY = 10 msec */
+		msleep(10);
 	}
 
 	clear_bit(port1, hub->busy_bits);
